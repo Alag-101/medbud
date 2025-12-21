@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Medicine Availability Finder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6">
+
+<div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+    <h1 class="text-2xl font-bold mb-2">💊 Medicine Availability Finder</h1>
+
+    <p class="text-sm text-gray-600 mb-4">
+        This application is limited to <b>Dolo 650</b> and <b>Paracetamol 500</b>
+        in <b>Hyderabad</b> and <b>Bangalore</b> only.
+    </p>
+
+    <input
+        id="medicine"
+        type="text"
+        placeholder="Enter medicine name (e.g. Dolo 650)"
+        class="w-full p-2 border rounded mb-3"
+    />
+
+    <button
+        onclick="searchMedicine()"
+        class="w-full bg-green-600 text-white p-2 rounded"
+    >
+        Check Availability
+    </button>
+
+    <div id="summary" class="mt-4 font-medium"></div>
+    <div id="results" class="mt-4"></div>
+</div>
+
+<script>
+function searchMedicine() {
+    const medicine = document.getElementById("medicine").value;
+
+    fetch("/search", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ medicine })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const summary = document.getElementById("summary");
+        const results = document.getElementById("results");
+
+        results.innerHTML = "";
+
+        summary.innerHTML = `
+            Checked ${data.total_apps_checked} apps ·
+            Available on ${data.available_count}
+        `;
+
+        if (data.available_count === 0) {
+            results.innerHTML = "<p class='text-red-600'>No stock available nearby.</p>";
+            return;
+        }
+
+        data.results.forEach(p => {
+            results.innerHTML += `
+                <div class="border p-3 rounded mb-3">
+                    <h3 class="font-semibold">${p.app}</h3>
+                    <p>📍 ${p.distance_km} km away</p>
+                    <p>⏱️ ${p.delivery_minutes} mins</p>
+                    <p>💰 ₹${p.price}</p>
+                    <a href="${p.link}" target="_blank"
+                       class="text-blue-600 underline">
+                       Order from app
+                    </a>
+                </div>
+            `;
+        });
+    });
+}
+</script>
+
+</body>
+</html>
