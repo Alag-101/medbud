@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify
 from data import PHARMACY_DATA
 
@@ -7,25 +8,23 @@ app = Flask(__name__)
 def home():
     return render_template("index.html")
 
-@app.route("/")
-def home():
-    return render_template("index.html")
-
 @app.route("/search", methods=["POST"])
 def search_medicine():
     payload = request.json
     medicine = payload.get("medicine", "").lower()
+    location = payload.get("location", "").strip()
 
-    # 1. Filter by medicine name
+    # Filter by medicine name and location
     matched = [
         p for p in PHARMACY_DATA
-        if medicine in p["medicine"].lower()
+        if medicine in p["medicine"].lower() and p["location"] == location
     ]
 
-    # 2. Filter only AVAILABLE stock
+    # Filter only AVAILABLE stock
     available = [p for p in matched if p["available"]]
 
-    # 3. Sort by: distance → delivery time → price
+    # Sort by availability-first logic:
+    # distance → delivery time → price
     available_sorted = sorted(
         available,
         key=lambda x: (x["distance_km"], x["delivery_minutes"], x["price"])
@@ -38,4 +37,5 @@ def search_medicine():
     })
 
 if __name__ == "__main__":
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
